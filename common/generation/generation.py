@@ -21,6 +21,9 @@ class GenerationResult(NamedTuple):
     sampling_masks: torch.Tensor | None = None  # (B, T, BL)
     policy_inputs: tuple[torch.Tensor, ...] | None = None
     still_masked: torch.Tensor | None = None  # (B,)
+    remask_counts: torch.Tensor | None = None  # (B,) total rollback actions
+    remask_history: torch.Tensor | None = None  # (B, T, L)
+    confidence_history: torch.Tensor | None = None  # (B, T, L), NaN when masked
 
 
 def add_gumbel_noise(logits: torch.Tensor, temperature: float) -> torch.Tensor:
@@ -51,6 +54,10 @@ def generate_unified(
     temperature_policy: float = 1.0,
     full_context: bool = False,
     confidences_top_p: int = 1,
+    remask_threshold: float | None = None,
+    remask_min_age: int = 1,
+    max_remasks_per_token: int = 2,
+    remask_max_extra_steps: int = 16,
 ) -> GenerationResult:
     if remasking == "policy":
         if policy is None:
@@ -64,12 +71,34 @@ def generate_unified(
     else:
         raise ValueError(f"Unknown remasking strategy: {remasking}")
 
+    if remask_threshold is not None:
+        if not 0.0 <= remask_threshold <= 1.0:
+            raise ValueError("remask_threshold must be in [0, 1]")
+        if remask_min_age < 1:
+            raise ValueError("remask_min_age must be at least 1")
+        if max_remasks_per_token < 1:
+            raise ValueError("max_remasks_per_token must be at least 1")
+        if remask_max_extra_steps < 1:
+            raise ValueError("remask_max_extra_steps must be at least 1")
+
     B, prompt_L = prompt.shape
     L = gen_length
     x = torch.full((B, L + prompt_L), mask_id, dtype=torch.long, device=prompt.device)
     x[:, :prompt_L] = prompt
     steps_taken = torch.zeros((B,), dtype=torch.int32, device=x.device)
     num_blocks = L // block_length
+
+    # Heuristic remask state. Ages are -1 while masked, 0 on commit, and are
+    # incremented before each later model evaluation. Confidence tensors use
+    # NaN for positions that do not currently contain a committed token.
+    token_age = torch.full((B, L), -1, dtype=torch.int32, device=x.device)
+    remask_count_by_token = torch.zeros((B, L), dtype=torch.int32, device=x.device)
+    commit_confidence = torch.full(
+        (B, L), torch.nan, dtype=torch.float32, device=x.device
+    )
+    previous_confidence = torch.full_like(commit_confidence, torch.nan)
+    remask_history = [] if remask_threshold is not None else None
+    confidence_history = [] if remask_threshold is not None else None
 
     if attention_mask is not None:
         _attn_mask = torch.ones((B, L + prompt_L), dtype=torch.float, device=x.device)
@@ -93,6 +122,8 @@ def generate_unified(
         assert steps is not None and steps <= L
         tokens_per_step = L // steps
         max_steps = steps
+    if remask_threshold is not None:
+        max_steps += num_blocks * remask_max_extra_steps
 
     policy_type = None
     if policy is not None:
@@ -109,14 +140,35 @@ def generate_unified(
         block_index = torch.zeros(L, dtype=torch.bool, device=x.device)
         block_index[start_idx:end_idx] = True
 
-        for _ in range(block_length):
+        settled = torch.zeros((B,), dtype=torch.bool, device=x.device)
+        block_step_limit = block_length + (
+            remask_max_extra_steps if remask_threshold is not None else 0
+        )
+
+        for _ in range(block_step_limit):
             generation_part = x[:, prompt_L:]
             mask_index = (generation_part == mask_id) & (
                 steps_taken < max_steps
             ).unsqueeze(-1)
             block_mask_index = mask_index[:, block_index]  # (B, BL)
 
-            if (~block_mask_index).all():
+            decoded_index = generation_part != mask_id
+            token_age[decoded_index] += 1
+            eligible_remask = (
+                decoded_index
+                & block_index.unsqueeze(0)
+                & (token_age >= remask_min_age)
+                & (remask_count_by_token < max_remasks_per_token)
+            )
+            has_masked_work = block_mask_index.any(dim=-1)
+            needs_settle_check = (
+                eligible_remask.any(dim=-1) & ~settled
+                if remask_threshold is not None
+                else torch.zeros_like(has_masked_work)
+            )
+            needs_forward = has_masked_work | needs_settle_check
+
+            if not needs_forward.any():
                 break
 
             model_output = model(
@@ -143,6 +195,17 @@ def generate_unified(
 
             # Compute softmax once (needed by all strategies)
             probs = F.softmax(logits, dim=-1)
+
+            # Score the token currently occupying each decoded position. This
+            # differs from max confidence: it measures whether the model still
+            # supports the exact token that was committed on an earlier step.
+            safe_token_ids = generation_part.masked_fill(~decoded_index, 0)
+            current_token_confidence = torch.gather(
+                probs, dim=-1, index=safe_token_ids.unsqueeze(-1)
+            ).squeeze(-1)
+            current_token_confidence = current_token_confidence.float().masked_fill(
+                ~decoded_index, torch.nan
+            )
 
             # Get unmask decisions based on strategy
             if remasking == "policy":
@@ -199,11 +262,47 @@ def generate_unified(
                     remasking,
                 )
 
-            # Apply unmasking
-            x[:, prompt_L:] = torch.where(unmask, x0, generation_part)
+            # The rollback candidates are disjoint from the positions that
+            # were masked at the start of this step, so a remasked token cannot
+            # be immediately unmasked using the same model forward pass.
+            if remask_threshold is not None:
+                remask = (
+                    eligible_remask
+                    & needs_forward.unsqueeze(-1)
+                    & (current_token_confidence < remask_threshold)
+                )
+            else:
+                remask = torch.zeros_like(mask_index)
 
-            # Update steps taken: only count steps for batch elements that had work to do
-            steps_taken += block_mask_index.any(dim=-1).int()
+            # Apply unmasking
+            next_generation = torch.where(unmask, x0, generation_part)
+            next_generation = torch.where(remask, mask_id, next_generation)
+            x[:, prompt_L:] = next_generation
+
+            predicted_confidence = torch.gather(
+                probs, dim=-1, index=x0.unsqueeze(-1)
+            ).squeeze(-1).float()
+            retained = decoded_index & ~remask
+            previous_confidence[retained] = current_token_confidence[retained]
+            commit_confidence[unmask] = predicted_confidence[unmask]
+            previous_confidence[unmask] = predicted_confidence[unmask]
+            token_age[unmask] = 0
+            remask_count_by_token[remask] += 1
+            token_age[remask] = -1
+            commit_confidence[remask] = torch.nan
+            previous_confidence[remask] = torch.nan
+
+            if remask_threshold is not None:
+                remask_history.append(remask.detach().clone())
+                confidence_history.append(current_token_confidence.detach().clone())
+
+                complete_before_step = ~block_mask_index.any(dim=-1)
+                settled_now = complete_before_step & ~remask.any(dim=-1)
+                changed = unmask.any(dim=-1) | remask.any(dim=-1)
+                settled = torch.where(changed, False, settled | settled_now)
+
+            # Count model evaluations, including a final remask settle check.
+            steps_taken += needs_forward.int()
 
     # Prepare metadata for gradient steps/loss computation
     if record_policy_data:
@@ -237,11 +336,29 @@ def generate_unified(
             sampling_masks=sampling_masks,
             policy_inputs=policy_inputs_result,
             still_masked=still_masked,
+            remask_counts=remask_count_by_token.sum(dim=-1),
+            remask_history=(
+                torch.stack(remask_history, dim=1) if remask_history else None
+            ),
+            confidence_history=(
+                torch.stack(confidence_history, dim=1)
+                if confidence_history
+                else None
+            ),
         )
     else:
         return GenerationResult(
             sequences=x,
             steps_taken=steps_taken,
+            remask_counts=remask_count_by_token.sum(dim=-1),
+            remask_history=(
+                torch.stack(remask_history, dim=1) if remask_history else None
+            ),
+            confidence_history=(
+                torch.stack(confidence_history, dim=1)
+                if confidence_history
+                else None
+            ),
         )
 
 
@@ -410,9 +527,14 @@ def _confidence_threshold_unmask(
     confidence_masked[~block_mask_index] = -torch.inf
 
     unmask_local = confidence_masked > thres
-    if not unmask_local.any():
+    has_candidates = block_mask_index.any(dim=-1)
+    needs_force = has_candidates & ~unmask_local.any(dim=-1)
+    if needs_force.any():
         force_idx = torch.argmax(confidence_masked, dim=-1)
-        unmask_local.scatter_(1, force_idx.unsqueeze(-1), True)
+        batch_indices = torch.arange(
+            unmask_local.shape[0], device=unmask_local.device
+        )[needs_force]
+        unmask_local[batch_indices, force_idx[needs_force]] = True
 
     unmask = torch.zeros(
         (probs.shape[0], probs.shape[1]), dtype=torch.bool, device=probs.device

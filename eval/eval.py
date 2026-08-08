@@ -108,6 +108,10 @@ def evaluate(
     confidences_top_p=1,
     mask_id=126336,
     model_type=None,
+    remask_threshold=None,
+    remask_min_age=1,
+    max_remasks_per_token=2,
+    remask_max_extra_steps=16,
 ):
     model.eval()
     total_processed = torch.tensor(0, device=model.device)
@@ -153,6 +157,10 @@ def evaluate(
                 "mask_id": mask_id,
                 "model_type": model_type,
                 "attention_mask": attn_masks,
+                "remask_threshold": remask_threshold,
+                "remask_min_age": remask_min_age,
+                "max_remasks_per_token": max_remasks_per_token,
+                "remask_max_extra_steps": remask_max_extra_steps,
             }
 
             if remasking == "policy":
@@ -178,12 +186,12 @@ def evaluate(
             result = generate_unified(**gen_kwargs)
             out = result.sequences
 
-            if remasking == "policy":
-                steps_taken = result.steps_taken.tolist()
-            elif remasking == "fastdllm":
-                steps_taken = [result.steps_taken.item()]
-            else:
-                steps_taken = [result.steps_taken.item()] * len(input_ids)
+            steps_taken = result.steps_taken.tolist()
+            remask_counts = (
+                result.remask_counts.tolist()
+                if result.remask_counts is not None
+                else [0] * len(input_ids)
+            )
 
             generated_texts = tokenizer.batch_decode(
                 out[:, -gen_length:], skip_special_tokens=True
@@ -231,6 +239,7 @@ def evaluate(
                         "steps": steps_taken[j].item()
                         if hasattr(steps_taken[j], "item")
                         else steps_taken[j],
+                        "remasks": remask_counts[j],
                         "wall_time": wall_time_per_sample,
                     }
                     for j in range(len(task_ids))
@@ -248,6 +257,7 @@ def evaluate(
                         "steps": steps_taken[j].item()
                         if hasattr(steps_taken[j], "item")
                         else steps_taken[j],
+                        "remasks": remask_counts[j],
                         "wall_time": wall_time_per_sample,
                     }
                     for j in range(len(gt_answers))
@@ -278,6 +288,8 @@ def evaluate(
                     print(generated_texts[idx])
                     print("-" * 50)
                     print(f"Ground truth: {gt_answers[idx]}")
+                    print(f"NFE: {steps_taken[idx]}")
+                    print(f"Remasks: {remask_counts[idx]}")
 
     avg_wall_time = sum(wall_times) / len(wall_times)
     metrics = {
@@ -435,6 +447,10 @@ if __name__ == "__main__":
     parser.add_argument("--remasking", type=str, default="policy")
     parser.add_argument("--policy_path", type=str, default=None)
     parser.add_argument("--thres", type=float, default=0.7)
+    parser.add_argument("--remask_threshold", type=float, default=None)
+    parser.add_argument("--remask_min_age", type=int, default=1)
+    parser.add_argument("--max_remasks_per_token", type=int, default=2)
+    parser.add_argument("--remask_max_extra_steps", type=int, default=16)
     parser.add_argument("--n_test", type=int, default=None)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--temperature", type=float, default=0.0)
@@ -628,6 +644,10 @@ if __name__ == "__main__":
         confidences_top_p=args.grpo_config.confidences_top_p
         if args.remasking == "policy"
         else 1,
+        remask_threshold=args.remask_threshold,
+        remask_min_age=args.remask_min_age,
+        max_remasks_per_token=args.max_remasks_per_token,
+        remask_max_extra_steps=args.remask_max_extra_steps,
     )
 
     if accelerator.num_processes > 1:
@@ -652,6 +672,10 @@ if __name__ == "__main__":
                 "remasking": args.remasking,
                 "policy_path": args.policy_path,
                 "thres": args.thres,
+                "remask_threshold": args.remask_threshold,
+                "remask_min_age": args.remask_min_age,
+                "max_remasks_per_token": args.max_remasks_per_token,
+                "remask_max_extra_steps": args.remask_max_extra_steps,
                 "n_test": args.n_test,
             }
         )

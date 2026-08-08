@@ -3,6 +3,8 @@
 > This fork is preparing a reproducible baseline for research on learned
 > remasking policies. The algorithm currently remains identical to the Apple
 > release. For a clean Linux GPU server, start with [SERVER_SETUP.md](SERVER_SETUP.md).
+> The threshold-remask design and comparison commands are documented in
+> [REMASK_POLICY.md](REMASK_POLICY.md).
 
 This software project accompanies the research paper, [Learning Unmasking Policies for Diffusion Language Models](https://arxiv.org/abs/2512.09106).
 

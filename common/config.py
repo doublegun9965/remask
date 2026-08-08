@@ -65,6 +65,24 @@ class Config(GRPOConfig):
     remasking: Optional["str"] = field(
         default="low_confidence",
     )
+    remask_threshold: Optional[float] = field(
+        default=None,
+        metadata={
+            "help": "If set, remask committed tokens whose current-token confidence falls below this value."
+        },
+    )
+    remask_min_age: int = field(
+        default=1,
+        metadata={"help": "Minimum number of later model evaluations before a committed token can be remasked."},
+    )
+    max_remasks_per_token: int = field(
+        default=2,
+        metadata={"help": "Maximum rollback actions allowed at each generated position."},
+    )
+    remask_max_extra_steps: int = field(
+        default=16,
+        metadata={"help": "Additional model evaluations allowed per block for remask recovery."},
+    )
     dataset: Optional[str] = field(
         default="gsm8k",
     )
