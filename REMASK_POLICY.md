@@ -44,10 +44,12 @@ Configure the local GSM8K root in `.env.local`:
 
 ```bash
 RLDLLM_DATASETS_DIR=/mnt/workspace/datasets
+GSM8K_DATASET_PATH=/mnt/workspace/datasets/gsm8k
 ```
 
-The loader expects a Hugging Face `DatasetDict.save_to_disk` directory at
-`/mnt/workspace/datasets/gsm8k`, containing `train` and `test` splits.
+`GSM8K_DATASET_PATH` is the direct override and may point anywhere. The loader
+expects a Hugging Face `DatasetDict.save_to_disk` directory there, containing
+`train` and `test` splits.
 
 ## Stage 2: learned policy
 

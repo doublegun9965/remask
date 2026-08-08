@@ -27,7 +27,14 @@ def _load_dataset_with_fallback(
 ) -> Dataset:
     """Load dataset from local disk if available, otherwise from HuggingFace."""
     if local_name:
-        local_path = local_datasets_dir() / local_name
+        direct_override = (
+            os.environ.get("GSM8K_DATASET_PATH") if local_name == "gsm8k" else None
+        )
+        local_path = (
+            Path(direct_override)
+            if direct_override
+            else local_datasets_dir() / local_name
+        )
         if local_path.exists():
             return load_from_disk(str(local_path))
     if config:
