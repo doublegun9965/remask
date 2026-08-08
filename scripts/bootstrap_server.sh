@@ -4,6 +4,15 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
+if [[ ! -f .env.local ]]; then
+  cp .env.example .env.local
+  echo "Created .env.local. Set MODEL_PATH to the absolute local model directory."
+fi
+
+set -a
+source .env.local
+set +a
+
 if ! command -v curl >/dev/null 2>&1; then
   echo "ERROR: curl is required. Install it with your system package manager." >&2
   exit 1
@@ -19,9 +28,15 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "== Creating an environment that reuses the ROCm PyTorch build =="
-uv venv --python "$(command -v python)" --system-site-packages .venv
+if [[ -x .venv/bin/python ]]; then
+  echo "Reusing existing virtual environment: .venv"
+else
+  uv venv --clear --python "$(command -v python)" --system-site-packages .venv
+fi
 
 echo "== Installing project dependencies =="
+export UV_DEFAULT_INDEX="${PYPI_INDEX_URL:-https://pypi.org/simple}"
+echo "Python package index: $UV_DEFAULT_INDEX"
 uv pip install --python .venv/bin/python \
   "transformers==4.53.0" \
   "accelerate==1.4.0" \
@@ -35,10 +50,5 @@ uv pip install --python .venv/bin/python \
 
 echo "== Verifying the completed environment =="
 .venv/bin/python scripts/check_environment.py
-
-if [[ ! -f .env.local ]]; then
-  cp .env.example .env.local
-  echo "Created .env.local. Set MODEL_PATH to the absolute local model directory."
-fi
 
 echo "Bootstrap complete. Activate with: source .venv/bin/activate"
