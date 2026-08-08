@@ -33,9 +33,9 @@ uv pip install --python .venv/bin/python -e .
 echo "== Verifying Python and CUDA =="
 .venv/bin/python scripts/check_environment.py
 
-if [[ ! -f .env ]]; then
-  cp .env.example .env
-  echo "Created .env. Set MODEL_PATH to the absolute local model directory."
+if [[ ! -f .env.local ]]; then
+  cp .env.example .env.local
+  echo "Created .env.local. Set MODEL_PATH to the absolute local model directory."
 fi
 
 echo "Bootstrap complete. Activate with: source .venv/bin/activate"

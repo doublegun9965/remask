@@ -9,17 +9,17 @@ if [[ ! -x .venv/bin/python ]]; then
   exit 1
 fi
 
-if [[ ! -f .env ]]; then
-  echo "ERROR: copy .env.example to .env and set HF_TOKEN." >&2
+if [[ ! -f .env.local ]]; then
+  echo "ERROR: copy .env.example to .env.local and set MODEL_PATH." >&2
   exit 1
 fi
 
 set -a
-source .env
+source .env.local
 set +a
 
 if [[ -z "${MODEL_PATH:-}" ]]; then
-  echo "ERROR: set MODEL_PATH in .env." >&2
+  echo "ERROR: set MODEL_PATH in .env.local." >&2
   exit 1
 fi
 

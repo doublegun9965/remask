@@ -26,12 +26,14 @@ cd remask
 bash scripts/bootstrap_server.sh
 ```
 
-Edit `.env` and set `MODEL_PATH` to the absolute directory containing the
+The bootstrap creates `.env.local` from the committed `.env.example` template.
+Edit `.env.local` and set `MODEL_PATH` to the absolute directory containing the
 locally downloaded `GSAI-ML/LLaDA-8B-Instruct` files. No API is used for
 inference, and a Hugging Face token is not required for a complete local model.
+`.env.local` is ignored by Git and must never be committed.
 
 ```bash
-nano .env
+nano .env.local
 bash scripts/smoke_eval.sh
 ```
 
