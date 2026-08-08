@@ -35,7 +35,9 @@ inference, and a Hugging Face token is not required for a complete local model.
 `.env.local` is ignored by Git and must never be committed.
 `PYPI_INDEX_URL` defaults to the Aliyun mirror and can be changed in the same
 file. Re-running the bootstrap reuses an existing `.venv` instead of prompting
-to replace it.
+to replace it. Existing `.env.local` files created by an older revision should
+add `PYPI_INDEX_URL=https://mirrors.aliyun.com/pypi/simple`; otherwise the
+bootstrap still falls back to that mirror automatically.
 
 ```bash
 nano .env.local

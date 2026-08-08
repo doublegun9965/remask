@@ -35,7 +35,7 @@ else
 fi
 
 echo "== Installing project dependencies =="
-export UV_DEFAULT_INDEX="${PYPI_INDEX_URL:-https://pypi.org/simple}"
+export UV_DEFAULT_INDEX="${PYPI_INDEX_URL:-${UV_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple}}"
 echo "Python package index: $UV_DEFAULT_INDEX"
 uv pip install --python .venv/bin/python \
   "transformers==4.53.0" \
