@@ -18,6 +18,9 @@ reuses the base image's GPU-enabled PyTorch, and installs this project's
 remaining Python dependencies. It deliberately does not replace PyTorch or
 modify the system GPU driver. CUDA-specific optional packages such as
 `bitsandbytes` are not required for the baseline smoke test.
+Accelerate, PEFT, and TRL are installed without resolving their `torch`
+dependency so that uv cannot shadow the base image's ROCm build with a CUDA
+wheel.
 
 ## First deployment
 
@@ -62,4 +65,6 @@ bash scripts/smoke_eval.sh
 - If environment verification reports `GPU available: False`, select a cloud
   image with a PyTorch build compatible with its CUDA or ROCm environment, then rerun
   `scripts/check_environment.py`.
+- If an older bootstrap installed a CUDA PyTorch inside `.venv`, run
+  `uv pip uninstall --python .venv/bin/python torch` and rerun the bootstrap.
 - Do not put tokens, model weights, checkpoints, or cluster logs in Git.

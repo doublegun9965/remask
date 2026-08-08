@@ -39,14 +39,33 @@ export UV_DEFAULT_INDEX="${PYPI_INDEX_URL:-${UV_INDEX_URL:-https://mirrors.aliyu
 echo "Python package index: $UV_DEFAULT_INDEX"
 uv pip install --python .venv/bin/python \
   "transformers==4.53.0" \
-  "accelerate==1.4.0" \
-  "peft==0.15.1" \
-  "trl==0.19.1" \
   "datasets==4.0.0" \
   "tiktoken==0.9.0" \
   "wandb>=0.16.0" \
   sentencepiece evaluate scipy tqdm regex scikit-learn \
-  python-dotenv "numpy>=1.26.0" pandas s3fs matplotlib
+  python-dotenv "numpy>=1.26.0" pandas s3fs matplotlib \
+  packaging psutil pyyaml rich huggingface-hub safetensors
+
+# Install the training wrappers without dependency resolution. Their regular
+# metadata depends on `torch`, which makes uv install a CUDA wheel into this
+# environment instead of reusing the ROCm build exposed by system-site-packages.
+uv pip install --python .venv/bin/python --no-deps \
+  "accelerate==1.4.0" \
+  "peft==0.15.1" \
+  "trl==0.19.1"
+
+# A previous interrupted/older bootstrap may have placed a local CUDA torch in
+# the venv. Fail with an actionable message instead of silently using it.
+if ! .venv/bin/python - <<'PY'
+import torch
+raise SystemExit(0 if torch.version.hip else 1)
+PY
+then
+  echo "ERROR: .venv contains a non-ROCm PyTorch build." >&2
+  echo "Run: uv pip uninstall --python .venv/bin/python torch" >&2
+  echo "Then rerun this bootstrap script." >&2
+  exit 1
+fi
 
 echo "== Verifying the completed environment =="
 .venv/bin/python scripts/check_environment.py
