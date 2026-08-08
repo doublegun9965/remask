@@ -35,7 +35,7 @@ echo "== Verifying Python and CUDA =="
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
-  echo "Created .env. Replace hf_your_token_here before running a model."
+  echo "Created .env. Set MODEL_PATH to the absolute local model directory."
 fi
 
 echo "Bootstrap complete. Activate with: source .venv/bin/activate"

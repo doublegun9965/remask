@@ -26,18 +26,18 @@ cd remask
 bash scripts/bootstrap_server.sh
 ```
 
-Edit `.env` and replace the placeholder with a Hugging Face token that can
-access `GSAI-ML/LLaDA-8B-Instruct`. The token remains local and is ignored by
-Git.
+Edit `.env` and set `MODEL_PATH` to the absolute directory containing the
+locally downloaded `GSAI-ML/LLaDA-8B-Instruct` files. No API is used for
+inference, and a Hugging Face token is not required for a complete local model.
 
 ```bash
 nano .env
 bash scripts/smoke_eval.sh
 ```
 
-The first smoke run downloads the model and GSM8K, so it can take substantially
-longer than later runs. Success means one example completes without training a
-policy or writing evaluation artifacts.
+The first smoke run may still download GSM8K, so it can take longer than later
+runs. The model itself is loaded from `MODEL_PATH`. Success means one example
+completes without training a policy or writing evaluation artifacts.
 
 ## Updating the server
 

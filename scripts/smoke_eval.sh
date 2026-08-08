@@ -18,8 +18,18 @@ set -a
 source .env
 set +a
 
-if [[ -z "${HF_TOKEN:-}" || "$HF_TOKEN" == "hf_your_token_here" ]]; then
-  echo "ERROR: set a real HF_TOKEN in .env." >&2
+if [[ -z "${MODEL_PATH:-}" ]]; then
+  echo "ERROR: set MODEL_PATH in .env." >&2
+  exit 1
+fi
+
+if [[ "$MODEL_PATH" != /* ]]; then
+  echo "ERROR: MODEL_PATH must be an absolute path, got: $MODEL_PATH" >&2
+  exit 1
+fi
+
+if [[ ! -f "$MODEL_PATH/config.json" ]]; then
+  echo "ERROR: model config not found at: $MODEL_PATH/config.json" >&2
   exit 1
 fi
 
@@ -28,6 +38,7 @@ export WANDB_MODE="${WANDB_MODE:-disabled}"
 echo "Running one-example LLaDA baseline evaluation..."
 .venv/bin/python -m eval.eval \
   --config configs/experiment_configs/llada_8b_instruct_dit_confidence_BL32_mixture.yaml \
+  --model_path "$MODEL_PATH" \
   --dataset gsm8k \
   --n_test 1 \
   --batch_size 1 \
