@@ -513,10 +513,11 @@ if __name__ == "__main__":
     )
     tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
 
-    if "LLaDA" in args.model_path:
+    model_path_lower = args.model_path.lower()
+    if "llada" in model_path_lower:
         mask_id = MASK_TOKENS_MAP["LLaDA"]
         _model_type = "LLaDA"
-    elif "Dream" in args.model_path:
+    elif "dream" in model_path_lower:
         mask_id = MASK_TOKENS_MAP["Dream"]
         _model_type = "Dream"
     else:

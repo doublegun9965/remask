@@ -146,7 +146,8 @@ def main(grpo_config, model_config):
         )
 
     # Load model and tokenizer
-    if "LLaDA" in grpo_config.model_path:
+    model_path_lower = grpo_config.model_path.lower()
+    if "llada" in model_path_lower:
         model = AutoModel.from_pretrained(
             grpo_config.model_path,
             trust_remote_code=True,
@@ -155,7 +156,7 @@ def main(grpo_config, model_config):
         ).to(device)
         grpo_config.mask_id = MASK_TOKENS_MAP["LLaDA"]
         grpo_config.model_type = "LLaDA"
-    elif "Dream" in grpo_config.model_path:
+    elif "dream" in model_path_lower:
         model = AutoModel.from_pretrained(
             grpo_config.model_path,
             trust_remote_code=True,
