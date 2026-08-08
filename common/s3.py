@@ -5,8 +5,9 @@
 import logging
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
+from typing import Any
 
-import s3fs
 from transformers import TrainerCallback
 from transformers import TrainerControl
 from transformers import TrainerState
@@ -14,8 +15,11 @@ from transformers import TrainingArguments
 
 logger = logging.getLogger(__name__)
 
+if TYPE_CHECKING:
+    import s3fs
 
-def configure_s3(output_path: Path) -> s3fs.S3FileSystem:
+
+def configure_s3(output_path: Path) -> Any:
     raise NotImplementedError("Internal bucket setup stripped.")
 
 

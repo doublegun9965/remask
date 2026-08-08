@@ -43,7 +43,7 @@ uv pip install --python .venv/bin/python \
   "tiktoken==0.9.0" \
   "wandb>=0.16.0" \
   sentencepiece evaluate scipy tqdm regex scikit-learn \
-  python-dotenv "numpy>=1.26.0" pandas s3fs matplotlib \
+  python-dotenv "numpy>=1.26.0" pandas matplotlib \
   packaging psutil pyyaml rich huggingface-hub safetensors
 
 # Install the training wrappers without dependency resolution. Their regular

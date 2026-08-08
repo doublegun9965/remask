@@ -21,6 +21,8 @@ modify the system GPU driver. CUDA-specific optional packages such as
 Accelerate, PEFT, and TRL are installed without resolving their `torch`
 dependency so that uv cannot shadow the base image's ROCm build with a CUDA
 wheel.
+The release's unimplemented S3 placeholder is not installed for local runs;
+this avoids mixing the cloud image's boto3 with an incompatible botocore.
 
 ## First deployment
 
@@ -67,4 +69,6 @@ bash scripts/smoke_eval.sh
   `scripts/check_environment.py`.
 - If an older bootstrap installed a CUDA PyTorch inside `.venv`, run
   `uv pip uninstall --python .venv/bin/python torch` and rerun the bootstrap.
+- If an older bootstrap installed the unused S3 stack, run
+  `uv pip uninstall --python .venv/bin/python s3fs aiobotocore botocore`.
 - Do not put tokens, model weights, checkpoints, or cluster logs in Git.
