@@ -35,11 +35,11 @@ fi
 
 export WANDB_MODE="${WANDB_MODE:-disabled}"
 
-echo "Running one-example LLaDA baseline evaluation..."
+echo "Running one offline LLaDA baseline example..."
 .venv/bin/python -m eval.eval \
   --config configs/experiment_configs/llada_8b_instruct_dit_confidence_BL32_mixture.yaml \
   --model_path "$MODEL_PATH" \
-  --dataset gsm8k \
+  --dataset smoke \
   --n_test 1 \
   --batch_size 1 \
   --gen_length 32 \

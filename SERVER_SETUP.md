@@ -49,9 +49,9 @@ nano .env.local
 bash scripts/smoke_eval.sh
 ```
 
-The first smoke run may still download GSM8K, so it can take longer than later
-runs. The model itself is loaded from `MODEL_PATH`. Success means one example
-completes without training a policy or writing evaluation artifacts.
+The smoke run uses one embedded arithmetic question and performs no dataset or
+model downloads. The model is loaded from `MODEL_PATH`. Success means one
+example completes without training a policy or writing evaluation artifacts.
 
 ## Updating the server
 

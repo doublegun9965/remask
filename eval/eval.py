@@ -35,6 +35,7 @@ from data.loaders.gsm8k import GSM8KDataset
 from data.loaders.humaneval import HumanEvalDataset
 from data.loaders.math500 import MATH500Dataset
 from data.loaders.mbpp import MBPPDataset
+from data.loaders.smoke import SmokeDataset
 from data.sanitize import sanitize_humaneval
 from data.sanitize import sanitize_mbpp
 
@@ -45,6 +46,7 @@ DATASET_MAP = {
     "math": MATH500Dataset,
     "humaneval": HumanEvalDataset,
     "mbpp": MBPPDataset,
+    "smoke": SmokeDataset,
 }
 
 
@@ -416,7 +418,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["gsm8k", "math", "humaneval", "mbpp"],
+        choices=["gsm8k", "math", "humaneval", "mbpp", "smoke"],
         default="gsm8k",
     )
     parser.add_argument("--suffix", type=str, default="")
