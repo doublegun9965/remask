@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from datasets import load_from_disk
 
-from data.loaders.gsm8k import DATASETS_PATH
+from data.loaders.gsm8k import datasets_path
 
 
 class HumanEvalDataset(torch.utils.data.Dataset):
@@ -35,7 +35,7 @@ class HumanEvalDataset(torch.utils.data.Dataset):
         return len(self.subsample)
 
     def load_test_dataset(self):
-        self.dataset = load_from_disk(f"{DATASETS_PATH}/humaneval")["test"]
+        self.dataset = load_from_disk(str(datasets_path() / "humaneval"))["test"]
 
     def create_prompt(self, prompt_text):
         # HumanEval is 0-shot (no few-shot examples)

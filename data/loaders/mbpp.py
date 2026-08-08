@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from datasets import load_from_disk
 
-from data.loaders.gsm8k import DATASETS_PATH
+from data.loaders.gsm8k import datasets_path
 
 
 class MBPPDataset(torch.utils.data.Dataset):
@@ -35,10 +35,10 @@ class MBPPDataset(torch.utils.data.Dataset):
         return len(self.subsample)
 
     def load_test_dataset(self):
-        self.dataset = load_from_disk(f"{DATASETS_PATH}/mbpp")["test"]
+        self.dataset = load_from_disk(str(datasets_path() / "mbpp"))["test"]
 
     def load_few_shot_examples(self):
-        prompt_data = load_from_disk(f"{DATASETS_PATH}/mbpp")["prompt"]
+        prompt_data = load_from_disk(str(datasets_path() / "mbpp"))["prompt"]
         n_examples = min(self.num_examples, len(prompt_data))
         return [prompt_data[i] for i in range(n_examples)]
 

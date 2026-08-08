@@ -6,7 +6,7 @@ import random
 
 from datasets import load_from_disk
 
-from data.loaders.gsm8k import DATASETS_PATH
+from data.loaders.gsm8k import datasets_path
 from data.loaders.gsm8k import GSM8KDataset
 
 MATH500_SYSTEM_PROMPT = """You are a math expert. You will be given a question to solve. Solve it step by step. Wrap the final answer in a \\boxed{}.
@@ -34,10 +34,12 @@ class MATH500Dataset(GSM8KDataset):
         )
 
     def load_test_dataset(self):
-        self.dataset = load_from_disk(f"{DATASETS_PATH}/math500")["test"]
+        self.dataset = load_from_disk(str(datasets_path() / "math500"))["test"]
 
     def load_few_shot_examples(self):
-        train_data = load_from_disk(f"{DATASETS_PATH}/hendrycks_math_algebra")["train"]
+        train_data = load_from_disk(
+            str(datasets_path() / "hendrycks_math_algebra")
+        )["train"]
         few_shot_examples = []
         samples = random.sample(range(len(train_data)), self.num_examples)
         for example in samples:
