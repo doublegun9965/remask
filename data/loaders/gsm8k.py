@@ -14,7 +14,9 @@ from datasets import load_from_disk
 
 from common.parsing.parsers import Parser
 
-DATASETS_PATH = Path(os.environ.get("RLDLLM_DATASETS_DIR", "/mnt/datasets"))
+def datasets_path() -> Path:
+    """Resolve the dataset root at runtime so .env.local overrides work."""
+    return Path(os.environ.get("RLDLLM_DATASETS_DIR", "/mnt/datasets"))
 
 GSM_SYSTEM_PROMPT = """You are a math expert. You will be given a question to solve. Solve it step by step. Wrap the final answer in a \\boxed{}.
 Respond in the following format:
@@ -56,7 +58,7 @@ class GSM8KDataset(torch.utils.data.Dataset):
         return len(self.subsample)
 
     def load_test_dataset(self):
-        local_path = DATASETS_PATH / "gsm8k"
+        local_path = datasets_path() / "gsm8k"
         if local_path.exists():
             self.dataset = load_from_disk(str(local_path))["test"]
         else:
@@ -79,7 +81,7 @@ class GSM8KDataset(torch.utils.data.Dataset):
 
     def load_few_shot_examples(self):
         if isinstance(self.dataset, GSM8KDataset):
-            local_path = DATASETS_PATH / "gsm8k"
+            local_path = datasets_path() / "gsm8k"
             if local_path.exists():
                 train_data = load_from_disk(str(local_path))["train"]
             else:

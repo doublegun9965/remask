@@ -17,7 +17,9 @@ from datasets import load_from_disk
 
 from common.parsing.parser_utils import extract_hash_answer
 
-LOCAL_DATASETS_DIR = Path(os.environ.get("RLDLLM_DATASETS_DIR", "/mnt/datasets"))
+def local_datasets_dir() -> Path:
+    """Resolve the dataset root at runtime so .env.local overrides work."""
+    return Path(os.environ.get("RLDLLM_DATASETS_DIR", "/mnt/datasets"))
 
 
 def _load_dataset_with_fallback(
@@ -25,7 +27,7 @@ def _load_dataset_with_fallback(
 ) -> Dataset:
     """Load dataset from local disk if available, otherwise from HuggingFace."""
     if local_name:
-        local_path = LOCAL_DATASETS_DIR / local_name
+        local_path = local_datasets_dir() / local_name
         if local_path.exists():
             return load_from_disk(str(local_path))
     if config:

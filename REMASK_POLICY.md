@@ -40,6 +40,15 @@ Each result prints generated text, NFE, and total remask actions. The first
 meaningful benchmark will sweep remask thresholds on GSM8K while holding the
 unmask rule, prompts, seeds, and generation limits fixed.
 
+Configure the local GSM8K root in `.env.local`:
+
+```bash
+RLDLLM_DATASETS_DIR=/mnt/workspace/datasets
+```
+
+The loader expects a Hugging Face `DatasetDict.save_to_disk` directory at
+`/mnt/workspace/datasets/gsm8k`, containing `train` and `test` splits.
+
 ## Stage 2: learned policy
 
 After the heuristic establishes that rollback works, its threshold decision

@@ -18,10 +18,14 @@ import torch
 import torch.distributed as dist
 from accelerate import Accelerator
 from accelerate.utils import gather_object
+from dotenv import load_dotenv
 from safetensors.torch import load_file
 from torch.utils.data import DataLoader
 from torch.utils.data import DistributedSampler
 from tqdm import tqdm
+
+load_dotenv(".env.local")
+
 from transformers import AutoModel
 from transformers import AutoTokenizer
 from trl import TrlParser

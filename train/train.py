@@ -13,6 +13,8 @@ import transformers
 import trl
 import wandb
 from dotenv import load_dotenv
+load_dotenv(".env.local")
+
 from transformers import AutoModel
 from transformers import AutoTokenizer
 from transformers import BitsAndBytesConfig
@@ -67,14 +69,6 @@ def get_reward_functions(config: Config):
         return reward_functions
     else:
         raise ValueError("Reward functions must be manually specified.")
-
-
-load_dotenv()
-token = os.getenv("HF_TOKEN")
-if not token:
-    raise ValueError(
-        "Hugging Face token not found in environment variables. Please set HF_TOKEN."
-    )
 
 
 MASK_TOKENS_MAP = {"LLaDA": 126336, "Dream": 151666}

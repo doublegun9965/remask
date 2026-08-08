@@ -38,6 +38,8 @@ Edit `.env.local` and set `MODEL_PATH` to the absolute directory containing the
 locally downloaded `GSAI-ML/LLaDA-8B-Instruct` files. No API is used for
 inference, and a Hugging Face token is not required for a complete local model.
 `.env.local` is ignored by Git and must never be committed.
+Set `RLDLLM_DATASETS_DIR` to the dataset root; GSM8K is read from its `gsm8k`
+subdirectory.
 `PYPI_INDEX_URL` defaults to the Aliyun mirror and can be changed in the same
 file. Re-running the bootstrap reuses an existing `.venv` instead of prompting
 to replace it. Existing `.env.local` files created by an older revision should
