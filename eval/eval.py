@@ -370,13 +370,17 @@ class CustomDistributedSampler(DistributedSampler):
         drop_last=False,
     ) -> None:
         if num_replicas is None:
-            if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
-            num_replicas = dist.get_world_size()
+            num_replicas = (
+                dist.get_world_size()
+                if dist.is_available() and dist.is_initialized()
+                else 1
+            )
         if rank is None:
-            if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
-            rank = dist.get_rank()
+            rank = (
+                dist.get_rank()
+                if dist.is_available() and dist.is_initialized()
+                else 0
+            )
         if rank >= num_replicas or rank < 0:
             raise ValueError(
                 f"Invalid rank {rank}, rank should be in the interval [0, {num_replicas - 1}]"
