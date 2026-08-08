@@ -8,14 +8,16 @@ an empty Linux GPU server to a one-example LLaDA evaluation.
 The server must already provide:
 
 - Linux on x86_64
-- an NVIDIA GPU with sufficient memory for LLaDA-8B
-- a working NVIDIA driver (`nvidia-smi` must succeed)
+- a GPU with sufficient memory for LLaDA-8B
+- a working GPU-enabled PyTorch installation in the base image (ROCm or CUDA)
 - `git` and `curl`
 - outbound access to GitHub, PyPI, Astral, Hugging Face, and the dataset host
 
-The bootstrap script installs Python 3.12, `uv`, a local virtual environment,
-and this project's Python dependencies. It deliberately does not modify the
-system NVIDIA driver.
+The bootstrap script installs `uv`, creates a local virtual environment that
+reuses the base image's GPU-enabled PyTorch, and installs this project's
+remaining Python dependencies. It deliberately does not replace PyTorch or
+modify the system GPU driver. CUDA-specific optional packages such as
+`bitsandbytes` are not required for the baseline smoke test.
 
 ## First deployment
 
@@ -52,8 +54,7 @@ bash scripts/smoke_eval.sh
 
 ## Troubleshooting boundary
 
-- If `nvidia-smi` fails, repair the server driver before running the bootstrap.
-- If environment verification reports `CUDA available: False`, install a
-  PyTorch wheel compatible with the server driver/CUDA environment, then rerun
+- If environment verification reports `GPU available: False`, select a cloud
+  image with a PyTorch build compatible with its CUDA or ROCm environment, then rerun
   `scripts/check_environment.py`.
 - Do not put tokens, model weights, checkpoints, or cluster logs in Git.
