@@ -57,6 +57,7 @@ FEW_SHOT_DEFAULTS = {
     "math": 0,  # NOTE: Fast-dLLM uses 4
     "humaneval": 0,
     "mbpp": 3,
+    "smoke": 0,
 }
 
 
