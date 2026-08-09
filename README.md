@@ -139,3 +139,57 @@ python -m eval.eval \
     --sampling_mode bernoulli-argmax \
     --output_dir ./eval_results
 ```
+
+### GSM8K: Fast-dLLM Baseline vs. Threshold Remask
+
+Both commands below read `MODEL_PATH` and the local GSM8K path from
+`.env.local`. They use the same defaults (`N_TEST=20`, `BATCH_SIZE=1`,
+`GEN_LENGTH=128`, `BLOCK_LENGTH=32`, `UNMASK_THRESHOLD=0.7`, and seed 42) so
+the results are directly comparable.
+
+Method 1 -- Fast-dLLM unmask-threshold baseline without remasking:
+
+```bash
+bash scripts/eval_gsm8k_fastdllm.sh
+```
+
+Method 2 -- the same decoder with threshold-based remasking enabled:
+
+```bash
+bash scripts/eval_gsm8k_threshold_remask.sh
+```
+
+The default remask parameters are:
+
+```text
+REMASK_THRESHOLD=0.5
+REMASK_MIN_AGE=1
+MAX_REMASKS_PER_TOKEN=2
+REMASK_MAX_EXTRA_STEPS=16
+```
+
+Override parameters without editing either script. For a matched 100-example
+comparison:
+
+```bash
+N_TEST=100 bash scripts/eval_gsm8k_fastdllm.sh
+
+N_TEST=100 \
+REMASK_THRESHOLD=0.5 \
+REMASK_MIN_AGE=1 \
+MAX_REMASKS_PER_TOKEN=2 \
+REMASK_MAX_EXTRA_STEPS=16 \
+bash scripts/eval_gsm8k_threshold_remask.sh
+```
+
+Use `N_TEST=all` for the complete GSM8K test set. `OUTPUT_DIR` changes the
+result directory, and defaults to `results/`:
+
+```bash
+N_TEST=all OUTPUT_DIR=results/full bash scripts/eval_gsm8k_fastdllm.sh
+N_TEST=all OUTPUT_DIR=results/full bash scripts/eval_gsm8k_threshold_remask.sh
+```
+
+Each run prints and saves `Accuracy`, average/total/range of NFE, and
+average/total remask counts. The two scripts use distinct filename suffixes so
+one method does not overwrite the other.

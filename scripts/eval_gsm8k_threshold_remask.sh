@@ -30,14 +30,22 @@ batch_size="${BATCH_SIZE:-1}"
 gen_length="${GEN_LENGTH:-128}"
 block_length="${BLOCK_LENGTH:-32}"
 unmask_threshold="${UNMASK_THRESHOLD:-0.7}"
+remask_threshold="${REMASK_THRESHOLD:-0.5}"
+remask_min_age="${REMASK_MIN_AGE:-1}"
+max_remasks_per_token="${MAX_REMASKS_PER_TOKEN:-2}"
+remask_max_extra_steps="${REMASK_MAX_EXTRA_STEPS:-16}"
 output_dir="${OUTPUT_DIR:-results}"
 
-echo "Running GSM8K Fast-dLLM threshold baseline..."
+echo "Running GSM8K threshold-remask evaluation..."
 echo "Dataset: $dataset_path"
 echo "Samples: $n_test"
 echo "Batch size: $batch_size"
 echo "Generation length: $gen_length"
 echo "Unmask threshold: $unmask_threshold"
+echo "Remask threshold: $remask_threshold"
+echo "Remask minimum age: $remask_min_age"
+echo "Maximum remasks per token: $max_remasks_per_token"
+echo "Maximum extra steps: $remask_max_extra_steps"
 
 eval_args=(
   --config configs/experiment_configs/llada_8b_instruct_dit_confidence_BL32_mixture.yaml
@@ -48,7 +56,11 @@ eval_args=(
   --block_length "$block_length"
   --remasking fastdllm
   --thres "$unmask_threshold"
-  --suffix fastdllm_baseline
+  --remask_threshold "$remask_threshold"
+  --remask_min_age "$remask_min_age"
+  --max_remasks_per_token "$max_remasks_per_token"
+  --remask_max_extra_steps "$remask_max_extra_steps"
+  --suffix "threshold_remask_t${remask_threshold}"
   --output_dir "$output_dir"
   --seed 42
 )
