@@ -16,6 +16,8 @@ def score_gsm8k_generations(generations: list[dict], annotate: bool = False) -> 
     """Compute numeric exact-match accuracy for saved GSM8K generations."""
     correct = 0
     parsed = 0
+    nfes = []
+    remask_counts = []
 
     for item in generations:
         prediction = extract_gsm_answer(item.get("generations", ""))
@@ -28,15 +30,28 @@ def score_gsm8k_generations(generations: list[dict], annotate: bool = False) -> 
             and abs(prediction - ground_truth) < 1e-6
         )
         correct += int(is_correct)
+        if item.get("steps") is not None:
+            nfes.append(float(item["steps"]))
+        if item.get("remasks") is not None:
+            remask_counts.append(float(item["remasks"]))
 
         if annotate:
             item["extracted_answer"] = prediction
             item["is_correct"] = is_correct
 
     total = len(generations)
-    return {
+    metrics = {
         "accuracy": correct / total if total else 0.0,
         "correct": correct,
         "parsed_answers": parsed,
         "evaluated": total,
+        "average_nfe": sum(nfes) / len(nfes) if nfes else 0.0,
+        "total_nfe": sum(nfes),
+        "min_nfe": min(nfes) if nfes else 0.0,
+        "max_nfe": max(nfes) if nfes else 0.0,
+        "average_remasks": (
+            sum(remask_counts) / len(remask_counts) if remask_counts else 0.0
+        ),
+        "total_remasks": sum(remask_counts),
     }
+    return metrics

@@ -720,6 +720,13 @@ if __name__ == "__main__":
                 f"Parsed answers: {gsm8k_metrics['parsed_answers']}/{gsm8k_metrics['evaluated']}"
             )
             print(f"Accuracy: {100 * gsm8k_metrics['accuracy']:.2f}%")
+            print(f"Average NFE: {gsm8k_metrics['average_nfe']:.2f}")
+            print(f"Total NFE: {gsm8k_metrics['total_nfe']:.0f}")
+            print(
+                f"NFE range: {gsm8k_metrics['min_nfe']:.0f}-{gsm8k_metrics['max_nfe']:.0f}"
+            )
+            print(f"Average remasks: {gsm8k_metrics['average_remasks']:.2f}")
+            print(f"Total remasks: {gsm8k_metrics['total_remasks']:.0f}")
         print(f"Batch size: {args.batch_size}")
         print(f"Multi-GPU processes: {accelerator.num_processes}")
         print("=============================\n")

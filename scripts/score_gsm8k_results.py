@@ -22,6 +22,11 @@ def main():
     print(f"Correct: {metrics['correct']}/{metrics['evaluated']}")
     print(f"Parsed answers: {metrics['parsed_answers']}/{metrics['evaluated']}")
     print(f"Accuracy: {100 * metrics['accuracy']:.2f}%")
+    print(f"Average NFE: {metrics['average_nfe']:.2f}")
+    print(f"Total NFE: {metrics['total_nfe']:.0f}")
+    print(f"NFE range: {metrics['min_nfe']:.0f}-{metrics['max_nfe']:.0f}")
+    print(f"Average remasks: {metrics['average_remasks']:.2f}")
+    print(f"Total remasks: {metrics['total_remasks']:.0f}")
 
 
 if __name__ == "__main__":
