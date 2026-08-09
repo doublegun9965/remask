@@ -9,10 +9,9 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from datasets import load_dataset
-from datasets import load_from_disk
-
 from common.parsing.parsers import Parser
+from data.gsm8k_io import gsm8k_path
+from data.gsm8k_io import load_gsm8k_split
 
 def datasets_path() -> Path:
     """Resolve the dataset root at runtime so .env.local overrides work."""
@@ -20,8 +19,7 @@ def datasets_path() -> Path:
 
 
 def gsm8k_dataset_path() -> Path:
-    override = os.environ.get("GSM8K_DATASET_PATH")
-    return Path(override) if override else datasets_path() / "gsm8k"
+    return gsm8k_path("test")
 
 GSM_SYSTEM_PROMPT = """You are a math expert. You will be given a question to solve. Solve it step by step. Wrap the final answer in a \\boxed{}.
 Respond in the following format:
@@ -63,11 +61,7 @@ class GSM8KDataset(torch.utils.data.Dataset):
         return len(self.subsample)
 
     def load_test_dataset(self):
-        local_path = gsm8k_dataset_path()
-        if local_path.exists():
-            self.dataset = load_from_disk(str(local_path))["test"]
-        else:
-            self.dataset = load_dataset("openai/gsm8k", "main")["test"]
+        self.dataset = load_gsm8k_split("test")
 
     def create_prompt(self, input_text):
         # Format similar to your chat function
@@ -85,16 +79,11 @@ class GSM8KDataset(torch.utils.data.Dataset):
             return user_input
 
     def load_few_shot_examples(self):
-        if isinstance(self.dataset, GSM8KDataset):
-            local_path = gsm8k_dataset_path()
-            if local_path.exists():
-                train_data = load_from_disk(str(local_path))["train"]
-            else:
-                train_data = load_dataset("openai/gsm8k", "main")["train"]
+        if self.num_examples > 0:
+            train_data = load_gsm8k_split("train")
             examples = random.sample(range(len(train_data)), self.num_examples)
             return [train_data[example] for example in examples]
-        else:
-            return []
+        return []
 
     def create_few_shot_prompt(self):
         """Create few-shot prompt from dataset examples"""

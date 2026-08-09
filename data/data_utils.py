@@ -16,6 +16,7 @@ from datasets import load_dataset
 from datasets import load_from_disk
 
 from common.parsing.parser_utils import extract_hash_answer
+from data.gsm8k_io import load_gsm8k_split
 
 def local_datasets_dir() -> Path:
     """Resolve the dataset root at runtime so .env.local overrides work."""
@@ -75,10 +76,7 @@ XML_COT_FORMAT = """
 
 
 def get_gsm8k_questions(split="train") -> Dataset:
-    data = _load_dataset_with_fallback(
-        "openai/gsm8k", config="main", local_name="gsm8k"
-    )
-    data = data[split]
+    data = load_gsm8k_split(split)
     return data.map(
         lambda x: {
             "prompt": [
