@@ -58,6 +58,17 @@ The smoke run uses one embedded arithmetic question and performs no dataset or
 model downloads. The model is loaded from `MODEL_PATH`. Success means one
 example completes without training a policy or writing evaluation artifacts.
 
+After the smoke test passes, run the 20-example GSM8K Fast-dLLM baseline with:
+
+```bash
+bash scripts/eval_gsm8k_fastdllm.sh
+```
+
+The defaults can be overridden without editing the script, for example
+`N_TEST=100 BATCH_SIZE=2 UNMASK_THRESHOLD=0.8 bash
+scripts/eval_gsm8k_fastdllm.sh`.
+Use `N_TEST=all bash scripts/eval_gsm8k_fastdllm.sh` for the complete test set.
+
 ## Updating the server
 
 ```bash
