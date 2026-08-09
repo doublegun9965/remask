@@ -35,6 +35,7 @@ from common.generation.generation import generate_unified
 from common.models.policy import DiTHiddenStatePolicy
 from common.models.policy import DiTConfidencePolicy
 from common.models.policy import PolicyHFWrapper
+from common.parsing.gsm8k_metrics import score_gsm8k_generations
 from data.loaders.gsm8k import GSM8KDataset
 from data.loaders.humaneval import HumanEvalDataset
 from data.loaders.math500 import MATH500Dataset
@@ -660,13 +661,20 @@ if __name__ == "__main__":
             results["generations"] = all_gpu_generations
 
     if accelerator.is_main_process:
+        gsm8k_metrics = None
         if args.dataset in {"humaneval", "mbpp"}:
             results["code_eval_results"] = evaluate_code(
                 results["generations"], args.dataset
             )
+        elif args.dataset == "gsm8k":
+            gsm8k_metrics = score_gsm8k_generations(
+                results["generations"], annotate=True
+            )
         results["metrics"] = {
             k: results.pop(k) for k in ("wall_time", "total_processed")
         }
+        if gsm8k_metrics is not None:
+            results["metrics"].update(gsm8k_metrics)
         results.update(
             {
                 "model_path": args.model_path,
@@ -704,6 +712,14 @@ if __name__ == "__main__":
             print(
                 f"Coverage: {actual_samples_processed}/{expected_dataset_size} ({100 * actual_samples_processed / expected_dataset_size:.1f}%)"
             )
+        if gsm8k_metrics is not None:
+            print(
+                f"Correct: {gsm8k_metrics['correct']}/{gsm8k_metrics['evaluated']}"
+            )
+            print(
+                f"Parsed answers: {gsm8k_metrics['parsed_answers']}/{gsm8k_metrics['evaluated']}"
+            )
+            print(f"Accuracy: {100 * gsm8k_metrics['accuracy']:.2f}%")
         print(f"Batch size: {args.batch_size}")
         print(f"Multi-GPU processes: {accelerator.num_processes}")
         print("=============================\n")
