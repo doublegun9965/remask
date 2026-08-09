@@ -183,7 +183,7 @@ bash scripts/eval_gsm8k_threshold_remask.sh
 ```
 
 Use `N_TEST=all` for the complete GSM8K test set. `OUTPUT_DIR` changes the
-result directory, and defaults to `results/`:
+result root, and defaults to `results/`:
 
 ```bash
 N_TEST=all OUTPUT_DIR=results/full bash scripts/eval_gsm8k_fastdllm.sh
@@ -193,3 +193,15 @@ N_TEST=all OUTPUT_DIR=results/full bash scripts/eval_gsm8k_threshold_remask.sh
 Each run prints and saves `Accuracy`, average/total/range of NFE, and
 average/total remask counts. The two scripts use distinct filename suffixes so
 one method does not overwrite the other.
+
+Every run creates a timestamped subdirectory and includes the same timestamp
+in its JSON filename. For example:
+
+```text
+results/20260809_153012_fastdllm_baseline/
+results/20260809_153245_threshold_remask_t0.5/
+```
+
+This prevents repeated runs with the same parameters from overwriting earlier
+results. Set `RUN_TIMESTAMP` only when an external experiment launcher needs a
+specific run identifier; otherwise the scripts use the server's current time.

@@ -30,7 +30,9 @@ batch_size="${BATCH_SIZE:-1}"
 gen_length="${GEN_LENGTH:-128}"
 block_length="${BLOCK_LENGTH:-32}"
 unmask_threshold="${UNMASK_THRESHOLD:-0.7}"
-output_dir="${OUTPUT_DIR:-results}"
+output_root="${OUTPUT_DIR:-results}"
+run_timestamp="${RUN_TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}"
+run_output_dir="${output_root}/${run_timestamp}_fastdllm_baseline"
 
 echo "Running GSM8K Fast-dLLM threshold baseline..."
 echo "Dataset: $dataset_path"
@@ -38,6 +40,7 @@ echo "Samples: $n_test"
 echo "Batch size: $batch_size"
 echo "Generation length: $gen_length"
 echo "Unmask threshold: $unmask_threshold"
+echo "Results directory: $run_output_dir"
 
 eval_args=(
   --config configs/experiment_configs/llada_8b_instruct_dit_confidence_BL32_mixture.yaml
@@ -48,8 +51,8 @@ eval_args=(
   --block_length "$block_length"
   --remasking fastdllm
   --thres "$unmask_threshold"
-  --suffix fastdllm_baseline
-  --output_dir "$output_dir"
+  --suffix "fastdllm_baseline_${run_timestamp}"
+  --output_dir "$run_output_dir"
   --seed 42
 )
 

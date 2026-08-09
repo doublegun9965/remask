@@ -34,7 +34,9 @@ remask_threshold="${REMASK_THRESHOLD:-0.5}"
 remask_min_age="${REMASK_MIN_AGE:-1}"
 max_remasks_per_token="${MAX_REMASKS_PER_TOKEN:-2}"
 remask_max_extra_steps="${REMASK_MAX_EXTRA_STEPS:-16}"
-output_dir="${OUTPUT_DIR:-results}"
+output_root="${OUTPUT_DIR:-results}"
+run_timestamp="${RUN_TIMESTAMP:-$(date +%Y%m%d_%H%M%S)}"
+run_output_dir="${output_root}/${run_timestamp}_threshold_remask_t${remask_threshold}"
 
 echo "Running GSM8K threshold-remask evaluation..."
 echo "Dataset: $dataset_path"
@@ -46,6 +48,7 @@ echo "Remask threshold: $remask_threshold"
 echo "Remask minimum age: $remask_min_age"
 echo "Maximum remasks per token: $max_remasks_per_token"
 echo "Maximum extra steps: $remask_max_extra_steps"
+echo "Results directory: $run_output_dir"
 
 eval_args=(
   --config configs/experiment_configs/llada_8b_instruct_dit_confidence_BL32_mixture.yaml
@@ -60,8 +63,8 @@ eval_args=(
   --remask_min_age "$remask_min_age"
   --max_remasks_per_token "$max_remasks_per_token"
   --remask_max_extra_steps "$remask_max_extra_steps"
-  --suffix "threshold_remask_t${remask_threshold}"
-  --output_dir "$output_dir"
+  --suffix "threshold_remask_t${remask_threshold}_${run_timestamp}"
+  --output_dir "$run_output_dir"
   --seed 42
 )
 
